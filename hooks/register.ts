@@ -50,8 +50,8 @@ const live = (k: Kind, now: number) => {
 const when = (iso?: string) =>
   iso ? new Date(iso).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : '?'
 
-function statusLine(s: Settings, now: number) {
-  if (!s.on) return 'Limiter off'
+function statusLine(s: Settings, now: number): string | undefined {
+  if (!s.on) return undefined   // off: no status line at all
   const part = (k: Kind) => `${WINDOWS[k]} ${live(k, now)?.percentUsed ?? 0}%/${threshold(s, k) || 'no limit'}${threshold(s, k) ? '%' : ''}`
   return `${part('five_hour')} · ${part('seven_day')}${stopped ? ' · STOPPED' : ''}`
 }
