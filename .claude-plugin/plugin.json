@@ -1,0 +1,1 @@
+{ "name": "usage-limiter", "version": "1.2.0", "description": "Stops Claude Code safely before your weekly or 5-hour usage limit runs out, writes a hand-off note, and resumes after the reset.", "license": "MIT" }
