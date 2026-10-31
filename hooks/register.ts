@@ -7,7 +7,7 @@ import type { Register, SessionRateLimit } from 'claude-code'
 // - Near the limits: tells the model where usage stands so it can pace large work.
 const NOTE = 'CONTINUE.md'
 const READ_ONLY = new Set(['Read', 'Glob', 'Grep', 'TaskStop'])
-const RESUME = /^\s*continue\b/i
+const RESUME = /^\s*(continue|devam)/i   // English, or Turkish "devam et"
 const WINDOWS = { seven_day: 'weekly', five_hour: '5-hour' } as const
 type Kind = keyof typeof WINDOWS
 const KINDS = Object.keys(WINDOWS) as Kind[]

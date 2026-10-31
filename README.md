@@ -10,7 +10,7 @@ Claude Code already stops at 100%. That is too late if you need the rest of the 
 
 - **Stops at your threshold.** You choose the numbers, for the 5-hour window, the weekly window, or both. Nothing is limited until you set one. New work is blocked: shell commands, agents, workflows, schedules, and edits. Reading files stays allowed.
 - **Writes a hand-off note.** Claude finishes the current step and writes `CONTINUE.md` in the project root: what's done, what's half done, the exact next step. That note is the only file it can write while stopped.
-- **Resumes when you say so.** Type `continue` (or raise the limit) and Claude picks up from `CONTINUE.md`.
+- **Resumes when you say so.** Type `continue` (Turkish: `devam et`), or raise the limit, and Claude picks up from `CONTINUE.md`.
 - **Resumes after the reset (experimental).** When the window resets, the plugin tells Claude to read `CONTINUE.md` and carry on. This path is covered by tests but not yet proven in long real runs; please open an issue if it misbehaves.
 - **Paces the work.** Once usage passes half your threshold, Claude is told where usage stands and when it resets. That helps it checkpoint instead of starting a big job it can't finish.
 - **Ignores automatic prompts while stopped.** `/loop` ticks, scheduled wakeups, and background notifications don't start new turns.

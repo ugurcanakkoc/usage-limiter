@@ -50,7 +50,7 @@ test('weekly threshold stops work, keeps the note writable, resumes on "continue
   expect(((await $.prompt.submit({ text: 'continue', isMeta: true } as any)) as any).drop).toBeDefined()
   expect(await bash($)).toMatch(/blocked/)
 
-  await $.prompt.submit({ text: 'continue' } as any)
+  await $.prompt.submit({ text: 'devam et' } as any)
   expect(await bash($)).toBeUndefined()
   await $.session.measure(reading(80))
   expect(await bash($)).toBeUndefined()
