@@ -5,7 +5,6 @@ import type { Register, SessionRateLimit } from 'claude-code'
 //   tells the model to stop at a safe point and write CONTINUE.md.
 // - When the window resets: resumes by itself (or on "continue").
 // - Near the limits: tells the model where usage stands so it can pace large work.
-const DEFAULTS = { weekly: 70, fiveHour: 90 }
 const NOTE = 'CONTINUE.md'
 const READ_ONLY = new Set(['Read', 'Glob', 'Grep', 'TaskStop'])
 const RESUME = /^\s*continue\b/i
@@ -21,19 +20,18 @@ const STOP = `USAGE THRESHOLD REACHED. Do not start new work, agents, workflows 
 const RESUMED = `The usage window has reset (usage-limiter). Read ${NOTE} in the project root and continue from its next step. Delete ${NOTE} once its work is done.`
 
 const HELP = `/limit           status: current usage, thresholds, reset times
-/limit on        turn the limiter on with the saved thresholds
+/limit on        turn it back on with the last numbers you set
 /limit 50        stop at 50% of both the 5-hour and the weekly limit
 /limit h90 w70   set them apart: h = 5-hour, w = weekly
 /limit h3        limit the 5-hour window only (weekly unlimited); /limit w20 the other way
 /limit off       turn the limiter off
-/limit reset     back to defaults (h90 w70)
-Setting a number also turns the limiter on.`
+Nothing is limited until you set a number; setting one turns the limiter on.`
 
 type Settings = { on: boolean; weekly: number; fiveHour: number }
 
 async function settings($: any): Promise<Settings> {
   const s = ((await $.store.get('settings')) ?? {}) as Partial<Settings>
-  return { on: s.on ?? true, weekly: s.weekly ?? DEFAULTS.weekly, fiveHour: s.fiveHour ?? DEFAULTS.fiveHour }
+  return { on: s.on ?? false, weekly: s.weekly ?? 0, fiveHour: s.fiveHour ?? 0 }
 }
 async function save($: any, patch: Partial<Settings>) {
   await $.store.set('settings', { ...(await settings($)), ...patch })
@@ -127,7 +125,7 @@ async function report($: any) {
     const used = r ? `${r.percentUsed}%`.padStart(4) : limits[k] ? '   - (window reset, waiting for a reading)' : '   - (not reported yet)'
     return `${WINDOWS[k].padEnd(7)} ${used} / stop at ${t ? `${t}%` : 'no limit'}${r ? ` · resets ${when(r.resetsAt)}` : ''}`
   }
-  const head = s.on ? 'Limiter on' : 'Limiter OFF (turn on with /limit on, /limit 50 or /limit h90 w70)'
+  const head = s.on ? 'Limiter on' : 'Limiter off (set a limit: /limit 50 or /limit h90 w70)'
   const stop = stopped ? ` · STOPPED until ${when(stopped.resetsAt)} (type "continue" to go on now)` : ''
   return `${head}${stop}
 ${row('five_hour')}
@@ -139,7 +137,7 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     // rateLimits come from the last API response; re-read them in case a subagent's response moved them.
     $.clock.every(2 * 60 * 1000, async () => evaluate($, (await $.session.usage()).rateLimits))
-    await $.command.register({ name: 'limit', description: 'Usage limiter: /limit, /limit on, /limit 50, /limit h90 w70, /limit off, /limit reset' })
+    await $.command.register({ name: 'limit', description: 'Usage limiter: /limit, /limit 50, /limit h90 w70, /limit on, /limit off' })
     const r = await next(e)
     await evaluate($, (await $.session.usage()).rateLimits)
     return r
@@ -183,8 +181,13 @@ export const register: Register = on => {
     const words = e.args.trim().toLowerCase().replace(/%/g, '').split(/\s+/).filter(Boolean)
     const numbers = words.map(w => /^(h|w)?(\d{1,3})$/.exec(w))
     const [a = ''] = words
-    if (a === 'on' || a === 'off') await save($, { on: a === 'on' })
-    else if (a === 'reset') { await $.store.set('settings', {}); await $.store.set('paused', {}) }
+    if (a === 'off') await save($, { on: false })
+    else if (a === 'on') {
+      const s = await settings($)
+      if (!s.weekly && !s.fiveHour) return { text: `No limit set yet.
+${HELP}` }
+      await save($, { on: true })
+    }
     else if (words.length && numbers.every(Boolean)) {
       // Only the windows named are limited: "/limit h3" leaves the weekly window unlimited, and the other way round.
       const set: Settings = { on: true, fiveHour: 0, weekly: 0 }

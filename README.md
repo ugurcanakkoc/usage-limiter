@@ -8,7 +8,7 @@ Claude Code already stops at 100%. That is too late if you need the rest of the 
 
 ## What it does
 
-- **Stops at your threshold.** By default it stops at 70% of the weekly limit and 90% of the 5-hour limit. New work is blocked: shell commands, agents, workflows, schedules, and edits. Reading files stays allowed.
+- **Stops at your threshold.** You choose the numbers, for the 5-hour window, the weekly window, or both. Nothing is limited until you set one. New work is blocked: shell commands, agents, workflows, schedules, and edits. Reading files stays allowed.
 - **Writes a hand-off note.** Claude finishes the current step and writes `CONTINUE.md` in the project root: what's done, what's half done, the exact next step. That note is the only file it can write while stopped.
 - **Resumes by itself.** When the limit resets, Claude reads `CONTINUE.md` and carries on. To go on before then, type `continue`.
 - **Paces the work.** Once usage passes half your threshold, Claude is told where usage stands and when it resets. That helps it checkpoint instead of starting a big job it can't finish.
@@ -37,14 +37,13 @@ claude plugin install usage-limiter --marketplace ugurcanakkoc/usage-limiter
 | Command | Effect |
 | --- | --- |
 | `/limit` | Show usage, thresholds, and reset times |
-| `/limit on` | Turn the limiter on with the saved thresholds |
 | `/limit 50` | Stop at 50% of both the 5-hour and the weekly limit |
 | `/limit h90 w70` | Set them apart: `h` = 5-hour, `w` = weekly |
 | `/limit h3` | Limit only the 5-hour window; weekly is unlimited (`/limit w20`: only weekly) |
 | `/limit off` | Turn the limiter off |
-| `/limit reset` | Restore the defaults (`h90 w70`) |
+| `/limit on` | Turn it back on with the last numbers you set |
 
-Not sure what numbers to use? Run `/limit on`, then `/limit` to see your current usage. Setting a number also turns the limiter on. `%` is optional: `/limit 50%` works too.
+Not sure what numbers to use? Run `/limit` first to see your current usage. Setting a number turns the limiter on. `%` is optional: `/limit 50%` works too.
 
 ## How it measures
 

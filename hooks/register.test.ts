@@ -12,7 +12,7 @@ const reading = (weekly: number, fiveHour = 10) => ({
   changed: ['rateLimits'],
 }) as any
 
-async function setup($: any, on: any) {
+async function setup($: any, on: any, limit = 'h90 w70') {
   const seen = { timers: [] as { ms: number; fn: () => void }[], prompts: [] as string[] }
   const store = new Map<string, unknown>()
   on('command.register', () => ({ value: { command: 'limit' } }))
@@ -29,6 +29,7 @@ async function setup($: any, on: any) {
   on('store.get', (_: any, e: any) => ({ value: store.get(e.key) }))
   on('store.set', (_: any, e: any) => (store.set(e.key, e.value), { value: undefined }))
   await $.session.start({ cwd: '/work/game', surface: 'terminal', isInteractive: true })
+  if (limit) await $.command.run({ command: 'limit', args: limit } as any)
   return seen
 }
 
@@ -69,7 +70,7 @@ test('5-hour threshold stops, then resumes by itself at the reset', async ($, on
   expect(seen.prompts.at(-1)).toMatch(/CONTINUE\.md/)
 })
 
-test('off, number turns it on, percent forms, reset', async ($, on) => {
+test('off, on, number turns it on, percent forms', async ($, on) => {
   await setup($, on)
   await $.session.measure(reading(75))
   expect(await bash($)).toMatch(/blocked/)
@@ -102,7 +103,12 @@ test('off, number turns it on, percent forms, reset', async ($, on) => {
   await $.session.measure(reading(10, 99))
   expect(await bash($)).toBeUndefined()
   expect((await $.command.run({ command: 'limit', args: 'banana' } as any) as any).text).toMatch(/h90 w70/)
-  await $.session.measure(reading(75))
-  await $.command.run({ command: 'limit', args: 'reset' } as any)
-  expect(await bash($)).toMatch(/blocked/)
+})
+
+test('nothing is limited until a number is set', async ($, on) => {
+  await setup($, on, '')
+  await $.session.measure(reading(99, 99))
+  expect(await bash($)).toBeUndefined()
+  expect(((await $.command.run({ command: 'limit', args: 'on' } as any)) as any).text).toMatch(/No limit set yet/)
+  expect(await bash($)).toBeUndefined()
 })
